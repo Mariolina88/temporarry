@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="lib" path="/jgt-hortonmachine/target/jgt-hortonmachine-0.7.7-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="/jgt-oms3/target/jgt-oms3-0.7.7-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="/jgt-modules/target/jgt-modules-0.7.7-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="/jgt-jgrassgears/target/jgt-jgrassgears-0.7.7-SNAPSHOT-jar-with-dependencies.jar"/>
+	<classpathentry kind="lib" path="/jgt-grass/target/jgt-grass-0.7.7-SNAPSHOT.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
