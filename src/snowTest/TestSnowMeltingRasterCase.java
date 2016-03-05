@@ -17,24 +17,14 @@
  */
 package snowTest;
 
-import java.awt.image.WritableRaster;
-import java.net.URISyntaxException;
-import java.util.HashMap;
 
 import org.geotools.coverage.grid.GridCoverage2D;
-import org.geotools.data.simple.SimpleFeatureCollection;
+
 import org.jgrasstools.gears.io.rasterreader.OmsRasterReader;
 import org.jgrasstools.gears.io.rasterwriter.OmsRasterWriter;
-import org.jgrasstools.gears.io.shapefile.OmsShapefileFeatureReader;
-import org.jgrasstools.gears.io.timedependent.OmsTimeSeriesIteratorReader;
-import org.jgrasstools.gears.io.timedependent.OmsTimeSeriesIteratorWriter;
-import org.jgrasstools.gears.utils.PrintUtilities;
-import org.jgrasstools.gears.utils.RegionMap;
-import org.jgrasstools.gears.utils.coverage.CoverageUtilities;
-import org.jgrasstools.hortonmachine.utils.HMTestCase;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
-import snowMeltingPointCase.SnowMeltingPointCase;
+import org.jgrasstools.hortonmachine.utils.HMTestCase;
+
 import snowMeltingRasterCase.SnowMeltingRasterCase;
 
 /**
@@ -47,7 +37,7 @@ public class TestSnowMeltingRasterCase extends HMTestCase {
 	GridCoverage2D outSweDataGrid = null;
 	GridCoverage2D outMeltingDataGrid = null;
 
-	public void TestSnowMeltingRasterCase() throws Exception {
+	public TestSnowMeltingRasterCase() throws Exception {
 
 
 		String startDate = "2007-10-17 00:00" ;
@@ -108,10 +98,6 @@ public class TestSnowMeltingRasterCase extends HMTestCase {
 		EIJuneReader.process();
 		GridCoverage2D giugno = EIJuneReader.outRaster;
 
-		OmsShapefileFeatureReader stationsReader = new OmsShapefileFeatureReader();
-		stationsReader.file = "/Users/marialaura/Desktop/dottorato/CSU/NeveGiuseppe/data/JoeWrigth/stazioniOKOK2.shp";
-		stationsReader.readFeatureCollection();
-		SimpleFeatureCollection stationsFC = stationsReader.geodata;
 
 
 		SnowMeltingRasterCase snow = new SnowMeltingRasterCase();
@@ -145,17 +131,9 @@ public class TestSnowMeltingRasterCase extends HMTestCase {
 		snow.process();
 
 
-		RegionMap regionMap = CoverageUtilities.gridGeometry2RegionParamsMap(snow.inDem.getGridGeometry());
 
-		CoordinateReferenceSystem sourceCRS = snow.inDem.getCoordinateReferenceSystem2D();
-
-		WritableRaster meltingData=snow.outMeltingWritableRaster;
-		WritableRaster SWEData=snow.outMeltingWritableRaster;
-
-
-
-		outMeltingDataGrid = CoverageUtilities.buildCoverage("gridded",meltingData, regionMap, sourceCRS);
-		outSweDataGrid = CoverageUtilities.buildCoverage("gridded", SWEData,regionMap,sourceCRS);
+		outMeltingDataGrid = snow.outMeltingGrid;
+		outSweDataGrid = snow.outSWEGrid;
 
 		OmsRasterWriter writerSWEraster = new OmsRasterWriter();
 		writerSWEraster.inRaster = outSweDataGrid;

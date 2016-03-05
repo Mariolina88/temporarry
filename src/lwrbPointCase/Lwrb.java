@@ -139,15 +139,15 @@ public class Lwrb extends JGTModel {
 
 	@Description("The output downwelling Hashmap")
 	@Out
-	public HashMap<Integer, double[]> outHMlongwaveDownwelling;
+	public HashMap<Integer, double[]> outHMlongwaveDownwelling= new HashMap<Integer, double[]>();;
 
 	@Description("The output upwelling Hashmap")
 	@Out
-	public HashMap<Integer, double[]> outHMlongwaveUpwelling;
+	public HashMap<Integer, double[]> outHMlongwaveUpwelling= new HashMap<Integer, double[]>();;
 
 	@Description("The output longwave Hashmap")
 	@Out
-	public HashMap<Integer, double[]> outHMlongwave;
+	public HashMap<Integer, double[]> outHMlongwave= new HashMap<Integer, double[]>();;
 
 	Model modelCS;
 
@@ -245,9 +245,6 @@ public class Lwrb extends JGTModel {
 	 */
 	private void storeResult(double downwellingALLSKY, double upwelling,double longwave) 
 			throws SchemaException {
-		outHMlongwaveDownwelling = new HashMap<Integer, double[]>();
-		outHMlongwaveUpwelling = new HashMap<Integer, double[]>();
-		outHMlongwave = new HashMap<Integer, double[]>();
 
 		outHMlongwaveDownwelling.put(stationsId, new double[]{downwellingALLSKY});
 		outHMlongwaveUpwelling.put(stationsId, new double[]{upwelling});

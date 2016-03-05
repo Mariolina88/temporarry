@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
- package rainSnowSperataion;
+package rainSnowSperataion;
 
 
 import java.awt.image.RenderedImage;
@@ -40,10 +40,10 @@ import oms3.annotations.Unit;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.jgrasstools.gears.libs.modules.JGTConstants;
 import org.jgrasstools.gears.libs.modules.JGTModel;
-
+import org.jgrasstools.gears.utils.RegionMap;
 import org.jgrasstools.gears.utils.coverage.CoverageUtilities;
-
 import org.opengis.geometry.MismatchedDimensionException;
+
 import com.vividsolutions.jts.geom.Coordinate;
 
 
@@ -99,11 +99,11 @@ public class RainSnowSeparationRasterCase extends JGTModel {
 
 	@Description("The output rainfall map")
 	@Out
-	public WritableRaster outRainfallWritableRaster = null;
+	public GridCoverage2D outRainfallGrid = null;
 
 	@Description(" The output snowfall map")
 	@Out
-	public WritableRaster outSnowfallWritableRaster = null;
+	public GridCoverage2D outSnowfallGrid = null;
 
 
 
@@ -115,32 +115,42 @@ public class RainSnowSeparationRasterCase extends JGTModel {
 		WritableRaster precipitationMap=mapsReader(inPrecipitationGrid);
 
 		// get the dimension of the maps
-		int height=temperatureMap.getHeight();
-		int width=temperatureMap.getWidth();
+		RegionMap regionMap = CoverageUtilities.getRegionParamsFromGridCoverage(inDem);
+		int cols = regionMap.getCols();
+		int rows = regionMap.getRows();
+
+		// create the output maps with the right dimensions
+		WritableRaster outRainfallWritableRaster= CoverageUtilities.createDoubleWritableRaster(cols, rows, null, null, null);
+		WritableRaster outSnowfallWritableRaster= CoverageUtilities.createDoubleWritableRaster(cols, rows, null, null, null);
+
+		WritableRandomIter RainIter = RandomIterFactory.createWritable(outRainfallWritableRaster, null);
+		WritableRandomIter SnowIter = RandomIterFactory.createWritable(outSnowfallWritableRaster, null);
 
 		// iterate over the entire domain and compute for each pixel the SWE
-		for (int i=0;i<width;i++){
-			for (int j=0;j<height;j++){
+		for( int r = 1; r < rows - 1; r++ ) {
+			for( int c = 1; c < cols - 1; c++ ) {
 
 				// get the exact value of the variable in the pixel i, j 
-				precipitation=precipitationMap.getSampleDouble(i, j, 0);
-				temperature=temperatureMap.getSampleDouble(i, j, 0);
+				precipitation=precipitationMap.getSampleDouble(c, r, 0);
+				temperature=temperatureMap.getSampleDouble(c, r, 0);
 
 				// compute the rainfall and the snowfall according to Kavetski et al. (2006)
 				double rainfall=alfa_r*((precipitation/ Math.PI)* Math.atan((temperature - meltingTemperature) / m1)+precipitation/2);
 				double snowfall=alfa_s*(precipitation-rainfall);
 
-				// create the output maps with the right dimensions
-				outRainfallWritableRaster = CoverageUtilities.createDoubleWritableRaster(width, height,null, null, null);
-				outSnowfallWritableRaster = CoverageUtilities.createDoubleWritableRaster(width, height,null, null, null);
 
-				// computes the SWE and the melting discharge and store them in the maps
-				storeResultMaps(rainfall, snowfall, i,j);
-
+				RainIter.setSample(c, r, 0, rainfall);
+				SnowIter.setSample(c, r, 0, snowfall);
 
 			}
 		}
 
+		CoverageUtilities.setNovalueBorder(outRainfallWritableRaster);
+		CoverageUtilities.setNovalueBorder(outSnowfallWritableRaster);
+		outRainfallGrid = CoverageUtilities.buildCoverage("Rain", outRainfallWritableRaster, 
+				regionMap, inDem.getCoordinateReferenceSystem());
+		outSnowfallGrid = CoverageUtilities.buildCoverage("Snow", outSnowfallWritableRaster, 
+				regionMap, inDem.getCoordinateReferenceSystem());
 
 	}
 	/**
@@ -158,29 +168,6 @@ public class RainSnowSeparationRasterCase extends JGTModel {
 	}
 
 
-
-
-	/**
-	 * Store the result in the output maps.
-	 *
-	 * @param rainfall is the output rainfall
-	 * @param snowfall is the output snowfall
-	 * @param i the i-position of the the pixel in the map
-	 * @param j the j-position of the pixel in the map
-	 * @throws MismatchedDimensionException the mismatched dimension exception
-	 * @throws Exception
-	 */
-	private void storeResultMaps(double rainfall , double snowfall,int i, int j)
-			throws MismatchedDimensionException, Exception {
-
-		WritableRandomIter outIterRain = RandomIterFactory.createWritable(outRainfallWritableRaster, null);
-		WritableRandomIter outIterSnow = RandomIterFactory.createWritable(outSnowfallWritableRaster, null);
-
-		outIterRain.setSample(i, j, 0, rainfall);
-		outIterSnow.setSample(i, j, 0, snowfall);
-
-
-	}
 
 
 }

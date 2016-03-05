@@ -43,40 +43,40 @@ public class TestShortwaveRadiationBalancePointCase extends HMTestCase {
 
 	public void testInsolation() throws Exception {
 
-		String startDate = "2002-01-01 07:00";
-		String endDate = "2002-01-03 00:00";
+		String startDate = "2002-01-01 00:00";
+		String endDate = "2002-01-01 10:00";
 		int timeStepMinutes = 60;
 		String fId = "ID";
 
 
-		String inPathToAirT ="/Users/marialaura/Desktop/ValidationJAMILittleWashita/temperature_orarie_2002_2008_NEWNEW.csv";
-		String inPathToHumidity ="/Users/marialaura/Desktop/ValidationJAMILittleWashita/humidity_orarie_2002_2008_NEW.csv";
+		String inPathToAirT ="Resources/Input/temperature_orarie_2002_2008_NEWNEW.csv";
+		String inPathToHumidity ="Resources/Input/humidity_orarie_2002_2008_NEW.csv";
 
 		OmsTimeSeriesIteratorReader airTReader = getTimeseriesReader(inPathToAirT, fId, startDate, endDate, timeStepMinutes);
 		OmsTimeSeriesIteratorReader humidityReader = getTimeseriesReader(inPathToHumidity, fId, startDate, endDate, timeStepMinutes);
 
 		OmsShapefileFeatureReader stationsReader = new OmsShapefileFeatureReader();
-		stationsReader.file = "/Users/marialaura/Desktop/ValidationJAMILittleWashita/stazioniGIUSTE.shp";
+		stationsReader.file = "Resources/Input/stazioniGIUSTE.shp";
 		stationsReader.readFeatureCollection();
 		SimpleFeatureCollection stationsFC = stationsReader.geodata;
 
 		OmsRasterReader reader = new OmsRasterReader();
-		reader.file = "/Users/marialaura/Desktop/LW/pit_LW.asc";
+		reader.file = "Resources/Input/pit_LW.asc";
 		reader.fileNovalue = -9999.0;
 		reader.geodataNovalue = Double.NaN;
 		reader.process();
 		GridCoverage2D pit = reader.outRaster;
 
 		OmsRasterReader readers = new OmsRasterReader();
-		readers.file = "/Users/marialaura/Desktop/LW/sky.asc";
+		readers.file = "Resources/Input/sky.asc";
 		readers.fileNovalue = -9999.0;
 		readers.geodataNovalue = Double.NaN;
 		readers.process();
 		GridCoverage2D skyviewfactor = readers.outRaster;
 
-		String pathToDirect= "/Users/marialaura/Desktop/DIRETTA_Mary.csv";
-		String pathToDiffuse= "/Users/marialaura/Desktop/DIFFUSA_Mary.csv";
-		String pathToTopATM= "/Users/marialaura/Desktop/TOPATM_Mary.csv";
+		String pathToDirect= "Resources/Output/DIRETTA_Mary.csv";
+		String pathToDiffuse= "Resources/Output/DIFFUSA_Mary.csv";
+		String pathToTopATM= "Resources/Output/TOPATM_Mary.csv";
 
 		OmsTimeSeriesIteratorWriter writerDirect = new OmsTimeSeriesIteratorWriter();
 		OmsTimeSeriesIteratorWriter writerDiffuse = new OmsTimeSeriesIteratorWriter();

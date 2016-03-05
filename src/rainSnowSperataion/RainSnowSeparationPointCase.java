@@ -107,35 +107,19 @@ public class RainSnowSeparationPointCase extends JGTModel {
 	@Description("the linked HashMap with the coordinate of the stations")
 	LinkedHashMap<Integer, Coordinate> stationCoordinates;
 
-	@Description("The digital elevation model.")
-	@In
-	public GridCoverage2D inDem;
-
-	@Description("List of the indeces of the columns of the station in the map")
-	ArrayList <Integer> columnStation= new ArrayList <Integer>();
-
-	@Description("List of the indeces of the rows of the station in the map")
-	ArrayList <Integer> rowStation= new ArrayList <Integer>();
 	
 	@Description(" The output rainfall HashMap")
 	@Out
-	public HashMap<Integer, double[]> outRainfallHM;
+	public HashMap<Integer, double[]> outRainfallHM= new HashMap<Integer, double[]>();;
 
 	@Description(" The output snowfall HashMap")
 	@Out
-	public HashMap<Integer, double[]> outSnowfallHM;
+	public HashMap<Integer, double[]> outSnowfallHM= new HashMap<Integer, double[]>();;
 
 
 
 	@Execute
 	public void process() throws Exception { 
-
-		// computing the reference system of the input DEM
-		CoordinateReferenceSystem sourceCRS = inDem.getCoordinateReferenceSystem2D();
-
-		//  from pixel coordinates (in coverage image) to geographic coordinates (in coverage CRS)
-		MathTransform transf = inDem.getGridGeometry().getCRSToGrid2D();
-
 
 		// starting from the shp file containing the stations, get the coordinate
 		//of each station
@@ -144,7 +128,7 @@ public class RainSnowSeparationPointCase extends JGTModel {
 		//create the set of the coordinate of the station, so we can 
 		//iterate over the set
 		Set<Integer> stationCoordinatesIdSet = stationCoordinates.keySet();
-		Iterator<Integer> idIterator = stationCoordinatesIdSet.iterator();
+
 
 		// trasform the list of idStation into an array
 		idStations= stationCoordinatesIdSet.toArray();
@@ -153,21 +137,6 @@ public class RainSnowSeparationPointCase extends JGTModel {
 		// map and their latitude
 		// iterate over the list of the stations
 		for (int i=0;i<idStations.length;i++){
-
-			// compute the coordinate of the station from the linked hashMap
-			Coordinate coordinate = (Coordinate) stationCoordinates.get(idIterator.next());
-
-			// define the position, according to the CRS, of the station in the map
-			DirectPosition point = new DirectPosition2D(sourceCRS, coordinate.x, coordinate.y);
-
-			// trasform the position in two the indices of row and column 
-			DirectPosition gridPoint = transf.transform(point, null);
-
-			// add the indices to a list
-			columnStation.add((int) gridPoint.getCoordinate()[0]);
-			rowStation.add((int) gridPoint.getCoordinate()[1]);
-
-
 
 			// read the input data for the given station
 			temperature=inTemperatureValues.get(idStations[i])[0];
@@ -221,8 +190,6 @@ public class RainSnowSeparationPointCase extends JGTModel {
 	
 	private void storeResult_series(Integer ID,double rainfall, double snowfall) throws SchemaException {
 
-		outRainfallHM = new HashMap<Integer, double[]>();
-		outSnowfallHM = new HashMap<Integer, double[]>();
 
 		outRainfallHM.put(ID, new double[]{rainfall});
 

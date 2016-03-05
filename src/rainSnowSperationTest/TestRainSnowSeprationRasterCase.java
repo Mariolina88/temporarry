@@ -17,26 +17,17 @@
  */
 package rainSnowSperationTest;
 
-import java.awt.image.WritableRaster;
-import java.net.URISyntaxException;
-import java.util.HashMap;
+
 
 import org.geotools.coverage.grid.GridCoverage2D;
-import org.geotools.data.simple.SimpleFeatureCollection;
+
 import org.jgrasstools.gears.io.rasterreader.OmsRasterReader;
 import org.jgrasstools.gears.io.rasterwriter.OmsRasterWriter;
-import org.jgrasstools.gears.io.shapefile.OmsShapefileFeatureReader;
-import org.jgrasstools.gears.io.timedependent.OmsTimeSeriesIteratorReader;
-import org.jgrasstools.gears.io.timedependent.OmsTimeSeriesIteratorWriter;
-import org.jgrasstools.gears.utils.PrintUtilities;
-import org.jgrasstools.gears.utils.RegionMap;
-import org.jgrasstools.gears.utils.coverage.CoverageUtilities;
+
 import org.jgrasstools.hortonmachine.utils.HMTestCase;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
+
 
 import rainSnowSperataion.RainSnowSeparationRasterCase;
-import snowMeltingPointCase.SnowMeltingPointCase;
-import snowMeltingRasterCase.SnowMeltingRasterCase;
 
 /**
  * Test the separetor module.
@@ -48,11 +39,11 @@ public class TestRainSnowSeprationRasterCase extends HMTestCase {
 	GridCoverage2D outRainfallDataGrid = null;
 	GridCoverage2D outSnowfallDataGrid = null;
 
-	public void TestRainSnowSeprationRasterCase() throws Exception {
+	public TestRainSnowSeprationRasterCase() throws Exception {
 
 
 		OmsRasterReader demReader = new OmsRasterReader();
-		demReader.file = "/Users/marialaura/Desktop/dottorato/CSU/NeveGiuseppe/data/Maps/dem.asc";
+		demReader.file = "/Users/marialaura/Desktop/dottorato/CSU/NeveGiuseppe/data/Maps/pit.asc";
 		demReader.fileNovalue = -9999.0;
 		demReader.geodataNovalue = Double.NaN;
 		demReader.process();
@@ -77,26 +68,18 @@ public class TestRainSnowSeprationRasterCase extends HMTestCase {
 		separetor.process();
 
 
-		RegionMap regionMap = CoverageUtilities.gridGeometry2RegionParamsMap(separetor.inDem.getGridGeometry());
 
-		CoordinateReferenceSystem sourceCRS = separetor.inDem.getCoordinateReferenceSystem2D();
-
-		WritableRaster meltingData=separetor.outRainfallWritableRaster;
-		WritableRaster SWEData=separetor.outSnowfallWritableRaster;
-
-
-
-		outRainfallDataGrid = CoverageUtilities.buildCoverage("gridded",meltingData, regionMap, sourceCRS);
-		outSnowfallDataGrid = CoverageUtilities.buildCoverage("gridded", SWEData,regionMap,sourceCRS);
+		outRainfallDataGrid =separetor.outRainfallGrid;
+		outSnowfallDataGrid = separetor.outSnowfallGrid;
 
 		OmsRasterWriter writerRainfallRaster = new OmsRasterWriter();
 		writerRainfallRaster.inRaster = outRainfallDataGrid;
-		writerRainfallRaster.file = "/Users/marialaura/Desktop/dottorato/CSU/NeveGiuseppe/data/JoeWrigth/mapRainfall.asc";
+		writerRainfallRaster.file = "/Users/marialaura/Desktop/mapRainfall.asc";
 		writerRainfallRaster.process();
 
 		OmsRasterWriter writerSnowfallRaster = new OmsRasterWriter();
 		writerSnowfallRaster.inRaster = outSnowfallDataGrid;
-		writerSnowfallRaster.file = "/Users/marialaura/Desktop/dottorato/CSU/NeveGiuseppe/data/JoeWrigth/mapSnowfall.asc";
+		writerSnowfallRaster.file = "/Users/marialaura/Desktop/mapSnowfall.asc";
 		writerSnowfallRaster.process();
 
 	}

@@ -246,11 +246,11 @@ public class SnowMeltingPointCase extends JGTModel {
 
 	@Description(" The output melting discharge HashMap")
 	@Out
-	public HashMap<Integer, double[]> outMeltingDischargeHM;
+	public HashMap<Integer, double[]> outMeltingDischargeHM= new HashMap<Integer, double[]>();;
 
 	@Description(" The output SWE HashMap")
 	@Out
-	public HashMap<Integer, double[]> outSWEHM;
+	public HashMap<Integer, double[]> outSWEHM= new HashMap<Integer, double[]>();;
 
 	@Description(" The output SWE value")
 	double SWE;
@@ -525,8 +525,6 @@ public class SnowMeltingPointCase extends JGTModel {
 	 */
 	private void storeResult_series(Integer ID,double meltingDischarge , double SWE) throws SchemaException {
 
-		outSWEHM = new HashMap<Integer, double[]>();
-		outMeltingDischargeHM = new HashMap<Integer, double[]>();
 
 		outSWEHM.put(ID, new double[]{SWE});
 

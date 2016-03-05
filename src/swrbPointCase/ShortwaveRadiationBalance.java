@@ -215,15 +215,15 @@ public class ShortwaveRadiationBalance extends JGTModel {
 
 	@Description("the output hashmap withe the direct radiation")
 	@Out
-	public HashMap<Integer, double[]> outHMdirect;
+	public HashMap<Integer, double[]> outHMdirect= new HashMap<Integer, double[]>();;
 
 	@Description("the output hashmap withe the diffuse radiation")
 	@Out
-	public HashMap<Integer, double[]> outHMdiffuse;
+	public HashMap<Integer, double[]> outHMdiffuse= new HashMap<Integer, double[]>();;
 
 	@Description("the output hashmap withe the top atmosphere radiation")
 	@Out
-	public HashMap<Integer, double[]> outHMtopatm;
+	public HashMap<Integer, double[]> outHMtopatm= new HashMap<Integer, double[]>();;
 
 
 	DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm").withZone(DateTimeZone.UTC);
@@ -234,10 +234,6 @@ public class ShortwaveRadiationBalance extends JGTModel {
 	@Execute
 	public void process() throws Exception { 
 
-		//arraylist with the output of the computation of the direct, diffuse and top atmosphere radiation
-		ArrayList <Double> direct= new ArrayList <Double>();		
-		ArrayList <Double> diffuse= new ArrayList <Double>();		
-		ArrayList <Double> topATM= new ArrayList <Double>();
 
 		// This 2 operations allow to define if we are working with daily or hourly time step
 		// if we are working with Daily time step, every time it adds to the start date a day
@@ -253,18 +249,20 @@ public class ShortwaveRadiationBalance extends JGTModel {
 		// computing the reference system of the input DEM
 		CoordinateReferenceSystem sourceCRS = inDem.getCoordinateReferenceSystem2D();
 
+		if(step==0){
 		// transform the GrifCoverage2D maps into writable rasters
 		demWR=mapsTransform(inDem);
 		skyviewfactorWR=mapsTransform(inSkyview);
+		
+		// starting from the shp file containing the stations, get the coordinate
+		//of each station
+		stationCoordinates = getCoordinate(inStations, fStationsid);}
 
 		//get the dimension of the DEM and the resolution
 		int height=demWR.getHeight();
 		int width=demWR.getWidth();
 		double dx = CoverageUtilities.getRegionParamsFromGridCoverage(inDem).get(CoverageUtilities.XRES);
 
-		// starting from the shp file containing the stations, get the coordinate
-		//of each station
-		stationCoordinates = getCoordinate(inStations, fStationsid);
 
 		//create the set of the coordinate of the station, so we can 
 		//iterate over the set
@@ -322,22 +320,24 @@ public class ShortwaveRadiationBalance extends JGTModel {
 
 			
 			// calculate the direct radiation, during the daylight
-			direct.add( (hour > (sunrise) && hour < (sunset))?
+			double direct= (hour > (sunrise) && hour < (sunset))?
 					calcDirectRadiation(columnStation.get(i), rowStation.get(i), demWR, shadowWR, sunVector, 
-							normalWR,E0,temperature, humidity):0);
+							normalWR,E0,temperature, humidity):0;
 
 			//calculate the diffuse radiation, during the daylight
-			diffuse.add((hour > (sunrise) && hour < (sunset))?
-					calcDiffuseRadiation(sunVector, E0,columnStation.get(i), rowStation.get(i)):0);
+			double diffuse =(hour > (sunrise) && hour < (sunset))?
+					calcDiffuseRadiation(sunVector, E0,columnStation.get(i), rowStation.get(i)):0;
 
 			// calculate the radiation at the top of the atmosphere, during the daylight
-			topATM.add((hour > (sunrise) && hour < (sunset))?
-					calcTopAtmosphere(E0, sunVector[2]):0);
+			double topATM=(hour > (sunrise) && hour < (sunset))?
+					calcTopAtmosphere(E0, sunVector[2]):0;
 
-		}
+		
 		
 		//store the results in hashmpas
-		storeResult_series(idStations, direct, diffuse, topATM);
+		storeResult_series((Integer)idStations[i], direct, diffuse, topATM);
+		
+		}
 		
 		// upgrade the step for the date
 		step++;	
@@ -661,21 +661,16 @@ public class ShortwaveRadiationBalance extends JGTModel {
 	 * @param topATM is the radiation at the top of the atmosphere
 	 * @throws SchemaException 
 	 */
-	private void storeResult_series(Object [] ID,ArrayList <Double> direct , ArrayList <Double> diffuse,
-			ArrayList <Double> topATM) throws SchemaException {
+	private void storeResult_series(int ID, double direct , double diffuse,
+			double topATM) throws SchemaException {
 
-		outHMdirect = new HashMap<Integer, double[]>();
-		outHMdiffuse = new HashMap<Integer, double[]>();
-		outHMtopatm = new HashMap<Integer, double[]>();
 
-		for (int i=0;i<ID.length;i++){
+			outHMdirect.put(ID, new double[]{direct});
 
-			outHMdirect.put((Integer)ID[i], new double[]{direct.get(i)});
+			outHMdiffuse.put(ID, new double[]{diffuse});
 
-			outHMdiffuse.put((Integer)ID[i], new double[]{diffuse.get(i)});
+			outHMtopatm.put(ID, new double[]{topATM});
 
-			outHMtopatm.put((Integer)ID[i], new double[]{topATM.get(i)});
-		}
 
 	}
 

@@ -60,14 +60,6 @@ public class TestRainSnowSeprationPointCase extends HMTestCase {
 		OmsTimeSeriesIteratorReader airTReader = getTimeseriesReader(inPathToAirT, fId, startDate, endDate, timeStepMinutes);
 
 		
-		OmsRasterReader demReader = new OmsRasterReader();
-		demReader.file = "/Users/marialaura/Desktop/dottorato/CSU/NeveGiuseppe/data/Maps/dem.asc";
-		demReader.fileNovalue = -9999.0;
-		demReader.geodataNovalue = Double.NaN;
-		demReader.process();
-		GridCoverage2D dem = demReader.outRaster;
-
-		
 		OmsShapefileFeatureReader stationsReader = new OmsShapefileFeatureReader();
 		stationsReader.file = "/Users/marialaura/Desktop/dottorato/CSU/NeveGiuseppe/data/JoeWrigth/stazioniOKOK2.shp";
 		stationsReader.readFeatureCollection();
@@ -91,7 +83,6 @@ public class TestRainSnowSeprationPointCase extends HMTestCase {
 		 
 
 		RainSnowSeparationPointCase separetor = new RainSnowSeparationPointCase();
-		separetor.inDem = dem;
 		separetor.inStations = stationsFC;
 		separetor.fStationsid = "Field2";
 

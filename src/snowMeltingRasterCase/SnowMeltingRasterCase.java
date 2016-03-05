@@ -23,7 +23,6 @@ import org.jgrasstools.gears.libs.modules.JGTConstants;
 import java.awt.image.RenderedImage;
 import java.awt.image.WritableRaster;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 
@@ -47,7 +46,6 @@ import oms3.annotations.Unit;
 
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridGeometry2D;
-import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.jgrasstools.gears.libs.modules.JGTModel;
 import org.jgrasstools.gears.utils.CrsUtilities;
@@ -58,7 +56,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-import org.opengis.geometry.MismatchedDimensionException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import com.vividsolutions.jts.geom.Coordinate;
@@ -75,25 +72,25 @@ import com.vividsolutions.jts.geom.Point;
 @Status(Status.CERTIFIED)
 @License("General Public License Version 3 (GPLv3)")
 public class SnowMeltingRasterCase extends JGTModel {
-	
+
 	@Description("The map of the interpolated temperature.")
 	@In
 	public GridCoverage2D inTempGrid;
-	
+
 	@Description("The double value of the  temperature, once read from the HashMap")
 	double temperature;
 
 	@Description("The map of the the interpolated precipitation.")
 	@In
 	public GridCoverage2D inRainGrid;
-	
+
 	@Description("The double value of the rainfall, once read from the HashMap")
 	double rainfall;
-	
+
 	@Description("The map of the interpolated solar radiation.")
 	@In
 	public GridCoverage2D inSnowfallGrid;
-	
+
 	@Description("The double value of the snowfall, once read from the HashMap")
 	double snowfall;
 
@@ -238,11 +235,12 @@ public class SnowMeltingRasterCase extends JGTModel {
 
 	@Description("The output melting dicharge map")
 	@Out
-	public WritableRaster outMeltingWritableRaster = null;
+	public GridCoverage2D outMeltingGrid;
 
-	@Description(" The output SWE data map")
+	@Description("The output melting dicharge map")
 	@Out
-	public WritableRaster outSWEWritableRaster = null;
+	public GridCoverage2D outSWEGrid;
+
 
 	@Description(" The output SWE value")
 	double SWE;
@@ -285,24 +283,33 @@ public class SnowMeltingRasterCase extends JGTModel {
 		WritableRaster snowfallMap=mapsReader(inSnowfallGrid);
 		WritableRaster radiationMap=mapsReader(inSolarGrid);
 
+
+
 		// get the dimension of the maps
-		int height=temperatureMap.getHeight();
-		int width=temperatureMap.getWidth();
+		RegionMap regionMap = CoverageUtilities.getRegionParamsFromGridCoverage(inDem);
+		int cols = regionMap.getCols();
+		int rows = regionMap.getRows();
+
+		WritableRaster outMeltingWritableRaster = CoverageUtilities.createDoubleWritableRaster(cols, rows, null, null, null);
+		WritableRaster outSWEWritableRaster =CoverageUtilities.createDoubleWritableRaster(cols, rows, null, null, null); 
+
+		WritableRandomIter MeltingIter = RandomIterFactory.createWritable(outMeltingWritableRaster, null);       
+		WritableRandomIter SWEIter = RandomIterFactory.createWritable(outSWEWritableRaster, null);
 
 		// get the geometry of the maps and the coordinates of the stations
 		GridGeometry2D inDemGridGeo = inDem.getGridGeometry();
 		stationCoordinates = getCoordinate(inDemGridGeo);
 
 		// iterate over the entire domain and compute for each pixel the SWE
-		for (int i=0;i<width;i++){
-			for (int j=0;j<height;j++){
+		for( int r = 1; r < rows - 1; r++ ) {
+			for( int c = 1; c < cols - 1; c++ ) {
 				int k=0;
 
 				// get the exact value of the variable in the pixel i, j 
-				temperature=temperatureMap.getSampleDouble(i, j, 0);
-				rainfall=rainfallMap.getSampleDouble(i, j, 0);
-				snowfall=snowfallMap.getSampleDouble(i, j, 0);
-				shortwaveRadiation=radiationMap.getSampleDouble(i, j, 0);
+				temperature=temperatureMap.getSampleDouble(c, r, 0);
+				rainfall=rainfallMap.getSampleDouble(c, r, 0);
+				snowfall=snowfallMap.getSampleDouble(c, r, 0);
+				shortwaveRadiation=radiationMap.getSampleDouble(c, r, 0);
 
 				// get the coordinate of the given pixel
 				Coordinate coordinate = (Coordinate) stationCoordinates.get(k);
@@ -312,17 +319,14 @@ public class SnowMeltingRasterCase extends JGTModel {
 				latitudeStation.add(Math.toRadians(idPoint[0].getY()));
 
 				// compute the energy index as in the previous case
-				EImode=SimpleEIFactory.createModel(timeStep, date, latitudeStation.get(k), i, j, 
+				EImode=SimpleEIFactory.createModel(timeStep, date, latitudeStation.get(k), c, r, 
 						energyIJanuary,energyIFebruary, energyIMarch,  energyIApril,energyIMay, energyIJune);
 
 				EIvalue=EImode.eiValues();
 
-				// create the output maps with the right dimensions
-				outSWEWritableRaster = CoverageUtilities.createDoubleWritableRaster(width, height,null, null, null);
-				outMeltingWritableRaster = CoverageUtilities.createDoubleWritableRaster(width, height,null, null, null);
 
-				// computes the SWE and the melting discharge and store them in the maps
-				storeResultMaps(computeMeltingDischarge(), computeSWE(), i,j);
+				MeltingIter.setSample(c, r, 0, computeMeltingDischarge());
+				SWEIter.setSample(c, r, 0, computeSWE());
 
 				// the index k is for the loop over the list
 				k++;
@@ -330,6 +334,13 @@ public class SnowMeltingRasterCase extends JGTModel {
 			}
 		}
 
+		CoverageUtilities.setNovalueBorder(outMeltingWritableRaster);
+		CoverageUtilities.setNovalueBorder(outSWEWritableRaster);
+
+		outMeltingGrid = CoverageUtilities.buildCoverage("CI", outMeltingWritableRaster, 
+				regionMap, inDem.getCoordinateReferenceSystem());
+		outSWEGrid= CoverageUtilities.buildCoverage("CI", outSWEWritableRaster, 
+				regionMap, inDem.getCoordinateReferenceSystem());
 
 		// upgrade the step for the new date
 		step++;	
@@ -393,7 +404,7 @@ public class SnowMeltingRasterCase extends JGTModel {
 	 * @return the double value of the melting discharge
 	 */
 	private double computeMeltingDischarge(){	
-		
+
 		// compute the snowmelt 
 		double melting=(temperature>meltingTemperature)?computeMelting(model,combinedMeltingFactor, temperature, 
 				meltingTemperature, EIvalue,skyviewValue,radiationFactor,shortwaveRadiation):0;
@@ -496,28 +507,6 @@ public class SnowMeltingRasterCase extends JGTModel {
 	}
 
 
-
-	/**
-	 * Store the result in the output maps.
-	 *
-	 * @param meltingDischarge is the melting discharge
-	 * @param SWE is the snow water equivalent
-	 * @param i the i-position of the the pixel in the map
-	 * @param j the j-position of the pixel in the map
-	 * @throws MismatchedDimensionException the mismatched dimension exception
-	 * @throws Exception
-	 */
-	private void storeResultMaps(double melting , double SWE,int i, int j)
-			throws MismatchedDimensionException, Exception {
-
-		WritableRandomIter outIterSWE = RandomIterFactory.createWritable(outSWEWritableRaster, null);
-		WritableRandomIter outIterMelting = RandomIterFactory.createWritable(outMeltingWritableRaster, null);
-
-		outIterSWE.setSample(i, j, 0, SWE);
-		outIterMelting.setSample(i, j, 0, melting);
-
-
-	}
 
 
 }
