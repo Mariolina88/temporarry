@@ -86,7 +86,7 @@ public class TestRainSnowSeprationPointCase extends HMTestCase {
 		separetor.inStations = stationsFC;
 		separetor.fStationsid = "Field2";
 
-		while( airTReader.doProcess  ) { 
+		while( airTReader.doProcess) { 
 
 
 			separetor.alfa_r=1.12963980507173877;
